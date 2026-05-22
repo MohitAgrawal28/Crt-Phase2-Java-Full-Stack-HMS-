@@ -1,0 +1,22 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "HMSApp",
+            "request": "launch",
+            "mainClass": "HMSApp"
+        },
+        {
+            "type": "java",
+            "name": "Launch HMS Desktop",
+            "request": "launch",
+            "mainClass": "HospitalManagementSystem.HMSApp",
+            "cwd": "${workspaceFolder}/casestudy",
+            "classPaths": [
+                "${workspaceFolder}/casestudy",
+                "${workspaceFolder}/casestudy/HospitalManagementSystem/lib/mysql-connector-j-8.0.33.jar"
+            ]
+        }
+    ]
+}

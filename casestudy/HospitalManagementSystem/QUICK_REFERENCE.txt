@@ -1,0 +1,173 @@
+# Quick Reference - Hospital Management System
+
+## Run the App Now! 🚀
+
+### Option 1: Demo Version (Ready Now - No Setup)
+```powershell
+cd "c:\Users\Mohit\OneDrive\Desktop\CRT Phase 2\casestudy\HospitalManagementSystem"
+javac HMSDemo.java
+java HMSDemo
+```
+
+### Option 2: With MySQL (After Setup)
+```powershell
+javac -cp mysql-connector-java-8.0.33.jar HMS.java
+java -cp .;mysql-connector-java-8.0.33.jar HMS
+```
+
+---
+
+## Data Summary
+
+| Category | Count | Details |
+|----------|-------|---------|
+| Doctors | 8 | Cardiology, Neurology, Orthopedics, Pediatrics, General Surgery, Dermatology, ENT, Gynecology |
+| Insider Patients | 8 | With hospital beds (₹1500-₹2000/day) |
+| Visitor Patients | 6 | Consultation only (₹500-₹700) |
+| Appointments | 14 | June 1-14, 2026 |
+| Hospital Beds | 10 | Current capacity (8 occupied, 2 available) |
+
+---
+
+## Key Patient IDs
+
+### Insider (P-series):
+- P001: Rohan Mehta
+- P002: Kavya Singh
+- P003: Arjun Nair
+- P004: Deepika Chopra
+- P005: Nikhil Desai
+- P006: Riya Bansal
+- P007: Vishal Yadav
+- P008: Ananya Mukherjee
+
+### Visitor (V-series):
+- V001: Rahul Patel
+- V002: Shreya Kapoor
+- V003: Aman Joshi
+- V004: Neha Saxena
+- V005: Siddharth Das
+- V006: Zara Khan
+
+---
+
+## Key Doctor IDs
+
+| ID | Name | Specialization |
+|----|------|-----------------|
+| D001 | Rajesh Kumar | Cardiology |
+| D002 | Priya Sharma | Neurology |
+| D003 | Amit Patel | Orthopedics |
+| D004 | Neha Gupta | Pediatrics |
+| D005 | Vikram Singh | General Surgery |
+| D006 | Anjali Verma | Dermatology |
+| D007 | Sanjay Reddy | ENT |
+| D008 | Pooja Nair | Gynecology |
+
+---
+
+## Charge Calculations
+
+### Insider Patients (Bed-based)
+- Daily Rate: ₹1500 - ₹2000
+- Formula: Rate × Number of Days
+- Example: ₹1500 × 5 days = **₹7,500**
+
+### Visitor Patients (Consultation-based)
+- Consultation Fee: ₹500 - ₹700
+- Formula: Fee × Number of Consultations
+- Example: ₹500 × 3 = **₹1,500**
+
+---
+
+## Important Files
+
+| File | Purpose |
+|------|---------|
+| HMSDemo.java | Demo version (in-memory) - **USE THIS** |
+| HMS.java | Production version (MySQL) |
+| database_setup.sql | Create database and tables |
+| SETUP_GUIDE.md | Full setup instructions |
+| IMPROVEMENTS.md | Detailed fixes and improvements |
+| this file | Quick reference |
+
+---
+
+## Common Tasks
+
+### View All Patients
+Methods available in code:
+```java
+system.displayAllPatients();
+```
+
+### View All Doctors
+```java
+system.displayAllDoctors();
+```
+
+### View All Appointments
+```java
+system.showAppointments();
+```
+
+### Check Bed Status
+```java
+system.displayAvailableBeds();
+```
+
+### Add New Patient
+```java
+Patient newPatient = new Insider("P999", "John Doe", 1500);
+system.addPatient(newPatient);
+```
+
+### Add New Doctor
+```java
+Doctor newDoctor = new Doctor("D999", "Dr. Smith", "Cardiology");
+system.addDoctor(newDoctor);
+```
+
+### Schedule Appointment
+```java
+system.scheduleAppointment("P001", "D001", "2026-07-01");
+```
+
+---
+
+## Troubleshooting
+
+| Error | Solution |
+|-------|----------|
+| "cannot find symbol" during compilation | Use correct Patient/Doctor class names |
+| "Driver not found" (MySQL version) | Download mysql-connector-java-8.0.33.jar |
+| "Connection refused" (MySQL version) | Start MySQL Server |
+| "Duplicate entry" (MySQL version) | Clear data and restart, or use different IDs |
+| "Patient/Doctor ID not found" | Ensure patient/doctor exists before scheduling |
+
+---
+
+## What Was Fixed
+
+✅ Removed duplicate key errors  
+✅ Fixed database connection handling  
+✅ Added 14 records (doctors, patients, appointments)  
+✅ Increased bed capacity to 10  
+✅ Added patient/doctor/appointment viewing  
+✅ Added ID validation before operations  
+✅ Better error messages and guidance  
+✅ Created working demo version  
+
+---
+
+## Next Steps
+
+1. Run: `java HMSDemo` ← Start here
+2. See the application work with sample data
+3. Read SETUP_GUIDE.md for MySQL setup
+4. Customize patient/doctor data as needed
+5. Deploy with HMS.java when MySQL is ready
+
+---
+
+**Status: ✅ All Issues Fixed - App Running Successfully!**
