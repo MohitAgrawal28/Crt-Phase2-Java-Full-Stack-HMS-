@@ -54,18 +54,20 @@ git push -u origin main
 In Render dashboard, add these environment variables:
 
 ```
-DATABASE_URL=mysql://user:password@host:3306/hms_db
+DATABASE_URL=postgres://user:password@host:5432/hms_db
 DB_USER=hms_admin
 DB_PASSWORD=your_secure_password
 PORT=8080
 ```
 
-**Note:** You can use Render's MySQL add-on or external MySQL service.
+Use Render PostgreSQL. `DATABASE_URL` can be either Render's default
+`postgres://user:password@host:5432/database` value or a JDBC URL such as
+`jdbc:postgresql://host:5432/database`.
 
-### 5. Add MySQL Database (Option A - Render MySQL)
+### 5. Add PostgreSQL Database
 
 1. In your Render project, click "New +"
-2. Select "MySQL"
+2. Select "PostgreSQL"
 3. Configuration:
    - **Name:** `hms-database`
    - **Database Name:** `hms_db`
@@ -74,12 +76,6 @@ PORT=8080
 
 4. Render will create environment variable `DATABASE_URL` automatically
 5. Update Render web service to connect to this database
-
-**Option B - External MySQL Service**
-
-If using external MySQL (AWS RDS, DigitalOcean, etc.):
-- Manually set `DATABASE_URL` with your connection string
-- Format: `mysql://user:password@host:port/database`
 
 ### 6. Deploy
 
@@ -113,9 +109,9 @@ curl -X POST https://your-app.onrender.com/api/hms/patients \
 curl -X POST https://your-app.onrender.com/api/hms/doctors \
   -H "Content-Type: application/json" \
   -d '{
-    "doctorID":"D001",
+    "docID":"D001",
     "name":"Dr. Smith",
-    "speciality":"Cardiology"
+    "specialization":"Cardiology"
   }'
 
 # List doctors
@@ -125,10 +121,9 @@ curl https://your-app.onrender.com/api/hms/doctors
 curl -X POST https://your-app.onrender.com/api/hms/appointments \
   -H "Content-Type: application/json" \
   -d '{
-    "appointmentID":"A001",
     "patientID":"P001",
-    "doctorID":"D001",
-    "timing":"2024-06-01 10:00:00"
+    "docID":"D001",
+    "appointmentDate":"2026-06-01"
   }'
 ```
 
@@ -143,9 +138,9 @@ curl -X POST https://your-app.onrender.com/api/hms/appointments \
 
 | Variable | Purpose | Required | Example |
 |----------|---------|----------|---------|
-| `DATABASE_URL` | MySQL connection string | Yes | `mysql://user:pass@host:3306/hms_db` |
-| `DB_USER` | MySQL username | Yes | `hms_admin` |
-| `DB_PASSWORD` | MySQL password | Yes | Secure password |
+| `DATABASE_URL` | PostgreSQL connection string | Yes | `postgres://user:pass@host:5432/hms_db` |
+| `DB_USER` | PostgreSQL username | Optional if present in `DATABASE_URL` | `hms_admin` |
+| `DB_PASSWORD` | PostgreSQL password | Optional if present in `DATABASE_URL` | Secure password |
 | `PORT` | Server port | No | `8080` |
 
 ## Troubleshooting
@@ -158,14 +153,14 @@ curl -X POST https://your-app.onrender.com/api/hms/appointments \
 ### Build Succeeds, App Crashes
 - Check environment variables in Render dashboard
 - Verify DATABASE_URL format is correct
-- Check MySQL connection is accessible from Render
+- Check PostgreSQL connection is accessible from Render
 - View runtime logs for Spring Boot errors
 
 ### Database Connection Fails
-- Verify `DATABASE_URL` format matches: `mysql://user:password@host:port/db`
-- Test MySQL is running and accessible
+- Verify `DATABASE_URL` format matches: `postgres://user:password@host:port/db`
+- Test PostgreSQL is running and accessible
 - Check credentials are correct
-- For Render MySQL addon, wait 2-3 minutes after creation before using
+- For Render PostgreSQL, wait 2-3 minutes after creation before using
 
 ### High Memory Usage (Free Tier)
 - Free tier has 512MB RAM
@@ -180,7 +175,7 @@ curl -X POST https://your-app.onrender.com/api/hms/appointments \
 ## Performance Tips
 
 1. **Caching:** Add Redis for session/query caching
-2. **Database:** Use Render's MySQL (same region = lower latency)
+2. **Database:** Use Render PostgreSQL in the same region for lower latency
 3. **Monitoring:** Enable Render's metrics tab to monitor CPU, memory, network
 4. **Auto-Deploy:** Render auto-deploys on push to main branch
 
@@ -209,8 +204,8 @@ docker build -t hms-api:latest .
 
 Run locally with Docker:
 ```bash
-docker run -e DATABASE_URL=mysql://user:pass@host:3306/hms_db \
-           -e DB_USER=root \
+docker run -e DATABASE_URL=postgres://user:pass@host:5432/hms_db \
+           -e DB_USER=postgres \
            -e DB_PASSWORD=password \
            -p 8080:8080 \
            hms-api:latest

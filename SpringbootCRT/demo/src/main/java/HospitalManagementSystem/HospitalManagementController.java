@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/hms")
 public class HospitalManagementController {
     private final HospitalManagementService service;
 
@@ -19,45 +18,50 @@ public class HospitalManagementController {
         this.service = service;
     }
 
-    @GetMapping("")
+    @GetMapping("/")
+    public HospitalManagementService.SystemStatus appRoot() {
+        return service.status();
+    }
+
+    @GetMapping("/api/hms")
     public HospitalManagementService.SystemStatus root() {
         return service.status();
     }
 
-    @GetMapping("/health")
+    @GetMapping("/api/hms/health")
     public HospitalManagementService.SystemStatus health() {
         return service.status();
     }
 
-    @PostMapping("/patients")
+    @PostMapping("/api/hms/patients")
     public ResponseEntity<HospitalManagementService.OperationResult> addPatient(
             @RequestBody HospitalManagementService.PatientRequest request) {
         return respond(service.addPatient(request));
     }
 
-    @PostMapping("/doctors")
+    @PostMapping("/api/hms/doctors")
     public ResponseEntity<HospitalManagementService.OperationResult> addDoctor(
             @RequestBody HospitalManagementService.DoctorRequest request) {
         return respond(service.addDoctor(request));
     }
 
-    @GetMapping("/doctors")
+    @GetMapping("/api/hms/doctors")
     public List<HospitalManagementService.DoctorResponse> getDoctors() {
         return service.getDoctors();
     }
 
-    @PostMapping("/appointments")
+    @PostMapping("/api/hms/appointments")
     public ResponseEntity<HospitalManagementService.OperationResult> scheduleAppointment(
             @RequestBody HospitalManagementService.AppointmentRequest request) {
         return respond(service.scheduleAppointment(request));
     }
 
-    @GetMapping("/appointments")
+    @GetMapping("/api/hms/appointments")
     public List<AppointmentRow> getAppointments() {
         return service.getAppointments();
     }
 
-    @GetMapping("/beds")
+    @GetMapping("/api/hms/beds")
     public HospitalManagementService.SystemStatus beds() {
         return service.status();
     }
