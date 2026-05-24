@@ -63,9 +63,9 @@ class Doctor {
 }
 
 public class HMS {
-    private static final String URL = getConfig("HMS_DB_URL", "jdbc:mysql://localhost:3306/hms_db");
-    private static final String USER = getConfig("HMS_DB_USER", "root");
-    private static final String PASSWORD = getConfig("HMS_DB_PASSWORD", "agrawalmm_3");
+    private static final String URL = getConfig("DATABASE_URL", "jdbc:postgresql://localhost:5432/hms_db");
+    private static final String USER = getConfig("DB_USER", "postgres");
+    private static final String PASSWORD = getConfig("DB_PASSWORD", "");
     private final int totalBeds = 10;
     private boolean memoryMode;
     private final Map<String, Patient> memoryPatients = new LinkedHashMap<>();
@@ -91,9 +91,9 @@ public class HMS {
 
     private Connection getConnection() throws SQLException {
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
+            Class.forName("org.postgresql.Driver");
         } catch (ClassNotFoundException e) {
-            throw new SQLException("MySQL JDBC driver not found. Add mysql-connector-j to the classpath.", e);
+            throw new SQLException("PostgreSQL JDBC driver not found. Add postgresql to the classpath.", e);
         }
         return DriverManager.getConnection(URL, USER, PASSWORD);
     }
