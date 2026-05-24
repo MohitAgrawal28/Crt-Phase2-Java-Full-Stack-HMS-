@@ -65,7 +65,7 @@ class Doctor {
 public class HMS {
     private static final String URL = getConfig("HMS_DB_URL", "jdbc:mysql://localhost:3306/hms_db");
     private static final String USER = getConfig("HMS_DB_USER", "root");
-    private static final String PASSWORD = getConfig("HMS_DB_PASSWOR", "agrawalmm_3");
+    private static final String PASSWORD = getConfig("HMS_DB_PASSWORD", "agrawalmm_3");
     private final int totalBeds = 10;
     private boolean memoryMode;
     private final Map<String, Patient> memoryPatients = new LinkedHashMap<>();
@@ -126,10 +126,29 @@ public class HMS {
             conn.createStatement().execute(createPatientsTable);
             conn.createStatement().execute(createDoctorsTable);
             conn.createStatement().execute(createAppointmentsTable);
+            removeSmokeTestData(conn);
         } catch (SQLException e) {
             memoryMode = true;
             System.out.println("Database initialization skipped: " + e.getMessage());
             System.out.println("Using in-memory mode for this run. Set HMS_DB_PASSWORD to use MySQL.");
+        }
+    }
+
+    private void removeSmokeTestData(Connection conn) throws SQLException {
+        try (PreparedStatement deleteAppointments = conn.prepareStatement(
+                "DELETE FROM appointments WHERE docID IN (SELECT docID FROM doctors WHERE name = ?) "
+                        + "OR patientID IN (SELECT patientID FROM patients WHERE name = ?)");
+                PreparedStatement deleteDoctors = conn.prepareStatement("DELETE FROM doctors WHERE name = ?");
+                PreparedStatement deletePatients = conn.prepareStatement("DELETE FROM patients WHERE name = ?")) {
+            deleteAppointments.setString(1, "Smoke Doctor");
+            deleteAppointments.setString(2, "Smoke Patient");
+            deleteAppointments.executeUpdate();
+
+            deleteDoctors.setString(1, "Smoke Doctor");
+            deleteDoctors.executeUpdate();
+
+            deletePatients.setString(1, "Smoke Patient");
+            deletePatients.executeUpdate();
         }
     }
 

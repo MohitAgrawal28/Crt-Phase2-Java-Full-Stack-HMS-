@@ -130,11 +130,30 @@ public class HMS {
             conn.createStatement().execute(createPatientsTable);
             conn.createStatement().execute(createDoctorsTable);
             conn.createStatement().execute(createAppointmentsTable);
+            removeSmokeTestData(conn);
             memoryMode = false;
         } catch (SQLException e) {
             memoryMode = true;
             System.out.println("Database initialization skipped: " + e.getMessage());
             System.out.println("Using in-memory mode for this run. Set HMS_DB_PASSWORD to use MySQL.");
+        }
+    }
+
+    private void removeSmokeTestData(Connection conn) throws SQLException {
+        try (PreparedStatement deleteAppointments = conn.prepareStatement(
+                "DELETE FROM appointments WHERE docID IN (SELECT docID FROM doctors WHERE name = ?) "
+                        + "OR patientID IN (SELECT patientID FROM patients WHERE name = ?)");
+                PreparedStatement deleteDoctors = conn.prepareStatement("DELETE FROM doctors WHERE name = ?");
+                PreparedStatement deletePatients = conn.prepareStatement("DELETE FROM patients WHERE name = ?")) {
+            deleteAppointments.setString(1, "Smoke Doctor");
+            deleteAppointments.setString(2, "Smoke Patient");
+            deleteAppointments.executeUpdate();
+
+            deleteDoctors.setString(1, "Smoke Doctor");
+            deleteDoctors.executeUpdate();
+
+            deletePatients.setString(1, "Smoke Patient");
+            deletePatients.executeUpdate();
         }
     }
 

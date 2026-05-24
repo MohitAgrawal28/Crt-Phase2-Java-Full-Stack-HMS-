@@ -6,8 +6,13 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.UUID;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,6 +21,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 class DemoApplicationTests {
 
 	private final HttpClient httpClient = HttpClient.newHttpClient();
+	private String createdPatientId;
+	private String createdDoctorId;
 
 	@Value("${local.server.port}")
 	private int port;
@@ -29,6 +36,8 @@ class DemoApplicationTests {
 		String suffix = UUID.randomUUID().toString().substring(0, 8);
 		String patientId = "P" + suffix;
 		String doctorId = "D" + suffix;
+		createdPatientId = patientId;
+		createdDoctorId = doctorId;
 
 		HttpResponse<String> health = get("/api/hms/health");
 		assertThat(health.statusCode()).isEqualTo(200);
@@ -61,6 +70,36 @@ class DemoApplicationTests {
 		HttpResponse<String> hello = get("/hello");
 		assertThat(hello.statusCode()).isEqualTo(200);
 		assertThat(hello.body()).contains("Hello world");
+	}
+
+	@AfterEach
+	void cleanUpSmokeTestData() {
+		if (createdPatientId == null || createdDoctorId == null) {
+			return;
+		}
+
+		try (Connection conn = DriverManager.getConnection(config("HMS_DB_URL", "jdbc:mysql://localhost:3306/hms_db"),
+				config("HMS_DB_USER", "root"), config("HMS_DB_PASSWORD", "agrawalmm_3"))) {
+			deleteById(conn, "DELETE FROM appointments WHERE patientID = ? OR docID = ?", createdPatientId, createdDoctorId);
+			deleteById(conn, "DELETE FROM patients WHERE patientID = ?", createdPatientId);
+			deleteById(conn, "DELETE FROM doctors WHERE docID = ?", createdDoctorId);
+		} catch (SQLException ignored) {
+			// The service may be running in memory mode when MySQL is unavailable.
+		}
+	}
+
+	private void deleteById(Connection conn, String sql, String... values) throws SQLException {
+		try (PreparedStatement statement = conn.prepareStatement(sql)) {
+			for (int i = 0; i < values.length; i++) {
+				statement.setString(i + 1, values[i]);
+			}
+			statement.executeUpdate();
+		}
+	}
+
+	private String config(String key, String defaultValue) {
+		String value = System.getenv(key);
+		return value == null || value.isBlank() ? defaultValue : value;
 	}
 
 	private HttpResponse<String> get(String path) throws Exception {
