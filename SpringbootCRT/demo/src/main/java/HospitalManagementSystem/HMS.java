@@ -5,6 +5,10 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -63,9 +67,7 @@ class Doctor {
 }
 
 public class HMS {
-    private static final String URL = getConfig("HMS_DB_URL", "jdbc:mysql://localhost:3306/hms_db");
-    private static final String USER = getConfig("HMS_DB_USER", "root");
-    private static final String PASSWORD = getConfig("HMS_DB_PASSWORD", "agrawalmm_3");
+    private static final DatabaseConfig DATABASE = loadDatabaseConfig();
     private final int totalBeds = 10;
     private boolean memoryMode;
     private final Map<String, Patient> memoryPatients = new LinkedHashMap<>();
@@ -89,13 +91,71 @@ public class HMS {
         return value == null || value.isBlank() ? defaultValue : value;
     }
 
+    private static DatabaseConfig loadDatabaseConfig() {
+        String rawUrl = firstPresent("JDBC_DATABASE_URL", "DATABASE_URL", "HMS_DB_URL");
+        String user = firstPresent("DB_USER", "HMS_DB_USER");
+        String password = firstPresent("DB_PASSWORD", "HMS_DB_PASSWORD");
+
+        if (rawUrl == null) {
+            return new DatabaseConfig("jdbc:postgresql://localhost:5432/hms_db",
+                    user == null ? "postgres" : user,
+                    password == null ? "" : password);
+        }
+
+        if (rawUrl.startsWith("jdbc:")) {
+            return new DatabaseConfig(rawUrl,
+                    user == null ? "" : user,
+                    password == null ? "" : password);
+        }
+
+        if (rawUrl.startsWith("postgres://") || rawUrl.startsWith("postgresql://")) {
+            return parsePostgresUrl(rawUrl, user, password);
+        }
+
+        return new DatabaseConfig(rawUrl,
+                user == null ? "" : user,
+                password == null ? "" : password);
+    }
+
+    private static DatabaseConfig parsePostgresUrl(String rawUrl, String configuredUser, String configuredPassword) {
+        try {
+            URI uri = new URI(rawUrl);
+            String[] userInfo = uri.getUserInfo() == null ? new String[0] : uri.getUserInfo().split(":", 2);
+            String user = configuredUser != null ? configuredUser : decode(userInfo.length > 0 ? userInfo[0] : "");
+            String password = configuredPassword != null ? configuredPassword : decode(userInfo.length > 1 ? userInfo[1] : "");
+            String path = uri.getPath() == null || uri.getPath().isBlank() ? "/hms_db" : uri.getPath();
+            int port = uri.getPort() == -1 ? 5432 : uri.getPort();
+            String jdbcUrl = "jdbc:postgresql://" + uri.getHost() + ":" + port + path;
+            if (uri.getQuery() != null && !uri.getQuery().isBlank()) {
+                jdbcUrl += "?" + uri.getQuery();
+            }
+            return new DatabaseConfig(jdbcUrl, user, password);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid PostgreSQL DATABASE_URL.", e);
+        }
+    }
+
+    private static String firstPresent(String... keys) {
+        for (String key : keys) {
+            String value = System.getenv(key);
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    private static String decode(String value) {
+        return URLDecoder.decode(value, StandardCharsets.UTF_8);
+    }
+
     private Connection getConnection() throws SQLException {
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
+            Class.forName("org.postgresql.Driver");
         } catch (ClassNotFoundException e) {
-            throw new SQLException("MySQL JDBC driver not found. Add mysql-connector-j to the classpath.", e);
+            throw new SQLException("PostgreSQL JDBC driver not found. Add postgresql to the classpath.", e);
         }
-        return DriverManager.getConnection(URL, USER, PASSWORD);
+        return DriverManager.getConnection(DATABASE.url(), DATABASE.user(), DATABASE.password());
     }
 
     public int getTotalBeds() {
@@ -120,7 +180,7 @@ public class HMS {
                     + "specialization VARCHAR(100))";
 
             String createAppointmentsTable = "CREATE TABLE IF NOT EXISTS appointments ("
-                    + "appointmentID INT AUTO_INCREMENT PRIMARY KEY, "
+                    + "appointmentID SERIAL PRIMARY KEY, "
                     + "patientID VARCHAR(50), "
                     + "docID VARCHAR(50), "
                     + "appointmentDate DATE, "
@@ -135,7 +195,7 @@ public class HMS {
         } catch (SQLException e) {
             memoryMode = true;
             System.out.println("Database initialization skipped: " + e.getMessage());
-            System.out.println("Using in-memory mode for this run. Set HMS_DB_PASSWORD to use MySQL.");
+            System.out.println("Using in-memory mode for this run. Set DATABASE_URL, DB_USER, and DB_PASSWORD to use PostgreSQL.");
         }
     }
 
@@ -286,7 +346,7 @@ public class HMS {
             pstmt.setString(2, docID);
             pstmt.setString(3, date);
             pstmt.executeUpdate();
-            return "Appointment scheduled in MySQL database.";
+            return "Appointment scheduled in database.";
         } catch (SQLException e) {
             return "Booking error: " + e.getMessage();
         }
@@ -319,5 +379,8 @@ public class HMS {
             System.out.println("Unable to fetch appointments: " + e.getMessage());
         }
         return list;
+    }
+
+    private record DatabaseConfig(String url, String user, String password) {
     }
 }

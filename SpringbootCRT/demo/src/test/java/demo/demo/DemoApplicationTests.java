@@ -78,13 +78,13 @@ class DemoApplicationTests {
 			return;
 		}
 
-		try (Connection conn = DriverManager.getConnection(config("HMS_DB_URL", "jdbc:mysql://localhost:3306/hms_db"),
-				config("HMS_DB_USER", "root"), config("HMS_DB_PASSWORD", "agrawalmm_3"))) {
+		try (Connection conn = DriverManager.getConnection(databaseUrl(),
+				config("DB_USER", "postgres"), config("DB_PASSWORD", ""))) {
 			deleteById(conn, "DELETE FROM appointments WHERE patientID = ? OR docID = ?", createdPatientId, createdDoctorId);
 			deleteById(conn, "DELETE FROM patients WHERE patientID = ?", createdPatientId);
 			deleteById(conn, "DELETE FROM doctors WHERE docID = ?", createdDoctorId);
 		} catch (SQLException ignored) {
-			// The service may be running in memory mode when MySQL is unavailable.
+			// The service may be running in memory mode when PostgreSQL is unavailable.
 		}
 	}
 
@@ -100,6 +100,16 @@ class DemoApplicationTests {
 	private String config(String key, String defaultValue) {
 		String value = System.getenv(key);
 		return value == null || value.isBlank() ? defaultValue : value;
+	}
+
+	private String databaseUrl() {
+		String value = config("DATABASE_URL", "jdbc:postgresql://localhost:5432/hms_db");
+		if (value.startsWith("postgres://") || value.startsWith("postgresql://")) {
+			URI uri = URI.create(value);
+			int port = uri.getPort() == -1 ? 5432 : uri.getPort();
+			return "jdbc:postgresql://" + uri.getHost() + ":" + port + uri.getPath();
+		}
+		return value;
 	}
 
 	private HttpResponse<String> get(String path) throws Exception {
