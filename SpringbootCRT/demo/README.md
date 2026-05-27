@@ -284,6 +284,16 @@ Expected result:
 
 If `memoryMode` is `true`, the backend is running but Railway PostgreSQL variables are not connected correctly.
 
-## Vercel Usage
+## Vercel Frontend
 
-Do not deploy this Spring Boot backend on Vercel. Vercel is best used later for a frontend app. The frontend can call the Railway backend URL.
+Deploy the new `frontend` folder on Vercel and set:
+
+```text
+VITE_API_BASE_URL=https://<your-railway-domain>
+```
+
+The backend allows local frontend origins and Vercel preview/production domains through CORS. To lock it to one frontend domain later, set this on Railway:
+
+```text
+ALLOWED_ORIGIN_PATTERNS=https://<your-vercel-domain>
+```

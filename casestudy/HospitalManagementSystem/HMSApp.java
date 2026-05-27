@@ -30,10 +30,18 @@ public class HMSApp extends JFrame {
     public HMSApp() {
         this.databaseEngine = new HMS();
         this.databaseEngine.initializeDatabase();
-        setTitle("Hospital Management Control Center");
+        setTitle("Hospital Management Control Center - "
+                + (databaseEngine.isMemoryMode() ? "Memory Mode" : "Database Connected"));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(900, 700);
         setLocationRelativeTo(null);
+        if (databaseEngine.isMemoryMode()) {
+            JOptionPane.showMessageDialog(this,
+                    "Database is not connected. Data will not be saved after closing the app.\n"
+                            + "Check HMS_DB_URL, HMS_DB_USER, and HMS_DB_PASSWORD.",
+                    "Database connection warning",
+                    JOptionPane.WARNING_MESSAGE);
+        }
         showMainMenu();
     }
 
@@ -44,6 +52,12 @@ public class HMSApp extends JFrame {
         JLabel header = new JLabel("Hospital Management Interface", SwingConstants.CENTER);
         header.setFont(new Font("Segoe UI", Font.BOLD, 30));
         header.setForeground(new Color(30, 58, 138));
+
+        JLabel databaseStatus = new JLabel(databaseEngine.isMemoryMode()
+                ? "Memory mode: records are temporary"
+                : "Database connected: " + databaseEngine.getDatabaseUrl(), SwingConstants.CENTER);
+        databaseStatus.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        databaseStatus.setForeground(databaseEngine.isMemoryMode() ? new Color(185, 28, 28) : new Color(22, 101, 52));
 
         JPanel menu = new JPanel(new GridBagLayout());
         menu.setBackground(Color.WHITE);
@@ -70,6 +84,9 @@ public class HMSApp extends JFrame {
         rootGbc.insets = new Insets(0, 0, 22, 0);
         root.add(header, rootGbc);
         rootGbc.gridy = 1;
+        rootGbc.insets = new Insets(0, 0, 16, 0);
+        root.add(databaseStatus, rootGbc);
+        rootGbc.gridy = 2;
         rootGbc.insets = new Insets(0, 0, 0, 0);
         root.add(menu, rootGbc);
         setContentPane(root);

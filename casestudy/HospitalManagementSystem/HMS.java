@@ -63,7 +63,7 @@ class Doctor {
 }
 
 public class HMS {
-    private static final String URL = getConfig("HMS_DB_URL", "jdbc:mysql://localhost:3306/hms_db");
+    private static final String URL = getConfig("HMS_DB_URL", "jdbc:mysql://localhost:3307/hms_db");
     private static final String USER = getConfig("HMS_DB_USER", "root");
     private static final String PASSWORD = getConfig("HMS_DB_PASSWORD", "agrawalmm_3");
     private final int totalBeds = 10;
@@ -102,6 +102,14 @@ public class HMS {
         return totalBeds;
     }
 
+    public boolean isMemoryMode() {
+        return memoryMode;
+    }
+
+    public String getDatabaseUrl() {
+        return URL;
+    }
+
     public void initializeDatabase() {
         try (Connection conn = getConnection()) {
             String createPatientsTable = "CREATE TABLE IF NOT EXISTS patients ("
@@ -127,10 +135,11 @@ public class HMS {
             conn.createStatement().execute(createDoctorsTable);
             conn.createStatement().execute(createAppointmentsTable);
             removeSmokeTestData(conn);
+            memoryMode = false;
         } catch (SQLException e) {
             memoryMode = true;
             System.out.println("Database initialization skipped: " + e.getMessage());
-            System.out.println("Using in-memory mode for this run. Set HMS_DB_PASSWORD to use MySQL.");
+            System.out.println("Using in-memory mode for this run. Check HMS_DB_URL, HMS_DB_USER, and HMS_DB_PASSWORD.");
         }
     }
 
