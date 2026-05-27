@@ -4,8 +4,8 @@ services:
     runtime: docker
     plan: free
     rootDir: SpringbootCRT/demo
-    dockerfilePath: ./SpringbootCRT/demo/Dockerfile
-    dockerContext: ./SpringbootCRT/demo
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     healthCheckPath: /api/hms/health
     envVars:
       - key: DATABASE_URL
