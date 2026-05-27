@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HMS Dashboard</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #f4f7fb;
+      --ink: #17202a;
+      --muted: #667085;
+      --panel: #ffffff;
+      --line: #d9e2ec;
+      --teal: #0f766e;
+      --teal-dark: #115e59;
+      --blue: #2563eb;
+      --rose: #be123c;
+      --amber: #b45309;
+      --green: #067647;
+      --shadow: 0 16px 42px rgba(16, 24, 40, 0.10);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(37, 99, 235, 0.08) 36%, transparent 36%),
+        var(--page);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    header {
+      background: #15202b;
+      color: #fff;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .wrap {
+      width: min(1220px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      flex: 0 0 42px;
+      border-radius: 8px;
+      background: var(--teal);
+      font-weight: 800;
+    }
+
+    h1,
+    h2 {
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 760;
+    }
+
+    .subtitle {
+      margin-top: 3px;
+      color: #b8c4d2;
+      font-size: 14px;
+    }
+
+    .connection {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 36px;
+      padding: 7px 11px;
+      border: 1px solid rgba(255, 255, 255, 0.20);
+      border-radius: 8px;
+      color: #e4eaf1;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--amber);
+    }
+
+    .dot.online {
+      background: #12b76a;
+    }
+
+    main {
+      padding: 24px 0 42px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .stat,
+    .panel {
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .stat {
+      min-height: 104px;
+      padding: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 4px;
+      background: var(--teal);
+    }
+
+    .stat:nth-child(2)::before {
+      background: var(--rose);
+    }
+
+    .stat:nth-child(3)::before {
+      background: var(--green);
+    }
+
+    .stat:nth-child(4)::before {
+      background: var(--blue);
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 30px;
+      line-height: 1;
+      overflow-wrap: anywhere;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(320px, 410px) minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .panel {
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 15px 16px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+
+    h2 {
+      font-size: 16px;
+      font-weight: 760;
+    }
+
+    form {
+      display: grid;
+      gap: 12px;
+      padding: 16px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: #4b5563;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid #cfd8e3;
+      border-radius: 7px;
+      padding: 9px 10px;
+      color: var(--ink);
+      font: inherit;
+      background: #fff;
+    }
+
+    input:focus,
+    select:focus {
+      outline: 3px solid rgba(15, 118, 110, 0.16);
+      border-color: var(--teal);
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    button {
+      min-height: 42px;
+      border: 0;
+      border-radius: 7px;
+      padding: 9px 13px;
+      background: var(--teal);
+      color: #fff;
+      font: inherit;
+      font-weight: 760;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: var(--teal-dark);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.68;
+    }
+
+    .secondary {
+      min-height: 36px;
+      background: #eef4f8;
+      color: #344054;
+      border: 1px solid #d6dee8;
+      font-weight: 740;
+    }
+
+    .secondary:hover {
+      background: #e3eaf2;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    th,
+    td {
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+      font-size: 14px;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      background: #f8fafc;
+    }
+
+    tbody tr:hover {
+      background: #f9fbfd;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .empty {
+      padding: 20px 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .notice {
+      display: none;
+      margin: 0 16px 16px;
+      padding: 11px 12px;
+      border-radius: 7px;
+      border: 1px solid #f2d4a7;
+      background: #fff7ed;
+      color: #92400e;
+      font-size: 14px;
+    }
+
+    .notice.show {
+      display: block;
+    }
+
+    .message {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      display: none;
+      max-width: min(430px, calc(100% - 36px));
+      padding: 12px 14px;
+      border-radius: 8px;
+      background: #15202b;
+      color: #fff;
+      box-shadow: var(--shadow);
+      font-size: 14px;
+      z-index: 20;
+    }
+
+    .message.show {
+      display: block;
+    }
+
+    .message.error {
+      background: var(--rose);
+    }
+
+    .message.success {
+      background: var(--green);
+    }
+
+    @media (max-width: 920px) {
+      .topbar,
+      .brand {
+        align-items: flex-start;
+      }
+
+      .topbar {
+        flex-direction: column;
+      }
+
+      .stats,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .wrap {
+        width: min(100% - 22px, 1220px);
+      }
+
+      h1 {
+        font-size: 21px;
+      }
+
+      .row {
+        grid-template-columns: 1fr;
+      }
+
+      th,
+      td {
+        padding: 11px 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap topbar">
+      <div class="brand">
+        <div class="brand-mark">H</div>
+        <div>
+          <h1>Hospital Management Dashboard</h1>
+          <div class="subtitle">Patients, doctors, appointments, and bed status</div>
+        </div>
+      </div>
+      <div class="connection"><span id="statusDot" class="dot"></span><span id="statusText">Connecting</span></div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="stats" aria-label="Hospital status">
+      <div class="stat"><span>Total Beds</span><strong id="totalBeds">0</strong></div>
+      <div class="stat"><span>Occupied Beds</span><strong id="occupiedBeds">0</strong></div>
+      <div class="stat"><span>Available Beds</span><strong id="availableBeds">0</strong></div>
+      <div class="stat"><span>Storage Mode</span><strong id="storageMode">-</strong></div>
+    </section>
+
+    <section class="layout">
+      <div class="stack">
+        <article class="panel">
+          <div class="panel-head"><h2>Register Patient</h2></div>
+          <form id="patientForm">
+            <div class="row">
+              <label>Patient ID<input name="patientID" required placeholder="P102"></label>
+              <label>Name<input name="name" required placeholder="John Doe"></label>
+            </div>
+            <div class="row">
+              <label>Patient Type
+                <select name="patientType">
+                  <option value="Insider">Insider</option>
+                  <option value="Visitor">Visitor</option>
+                </select>
+              </label>
+              <label>Rate / Fee<input name="rateOrFee" type="number" min="0" value="500" required></label>
+            </div>
+            <button type="submit">Register Patient</button>
+          </form>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head"><h2>Register Doctor</h2></div>
+          <form id="doctorForm">
+            <div class="row">
+              <label>Doctor ID<input name="docID" required placeholder="D102"></label>
+              <label>Name<input name="name" required placeholder="Dr. Smith"></label>
+            </div>
+            <label>Specialization<input name="specialization" placeholder="Cardiology"></label>
+            <button type="submit">Register Doctor</button>
+          </form>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head"><h2>Schedule Appointment</h2></div>
+          <form id="appointmentForm">
+            <div class="row">
+              <label>Patient ID<input name="patientID" required placeholder="P102"></label>
+              <label>Doctor ID<input name="docID" required placeholder="D102"></label>
+            </div>
+            <label>Date<input name="appointmentDate" type="date" required></label>
+            <button type="submit">Schedule Appointment</button>
+          </form>
+        </article>
+      </div>
+
+      <div class="stack">
+        <article class="panel">
+          <div class="panel-head">
+            <h2>Doctors</h2>
+            <button class="secondary" type="button" id="refreshDoctors">Refresh</button>
+          </div>
+          <div id="doctorsEmpty" class="empty">No doctors registered.</div>
+          <div class="table-wrap">
+            <table id="doctorsTable" hidden>
+              <thead><tr><th>Doctor ID</th><th>Name</th><th>Specialization</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head">
+            <h2>Appointments</h2>
+            <button class="secondary" type="button" id="refreshAppointments">Refresh</button>
+          </div>
+          <div id="appointmentsEmpty" class="empty">No appointments scheduled.</div>
+          <div class="table-wrap">
+            <table id="appointmentsTable" hidden>
+              <thead><tr><th>Patient</th><th>Doctor</th><th>Date</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </article>
+
+        <div id="memoryNotice" class="notice">
+          Running in memory mode. Data is available now, but it will reset when the server restarts.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="message" class="message" role="status" aria-live="polite"></div>
+
+  <script>
+    const api = {
+      health: "/api/hms/health",
+      patients: "/api/hms/patients",
+      doctors: "/api/hms/doctors",
+      appointments: "/api/hms/appointments"
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const message = $("message");
+
+    function showMessage(text, type = "success") {
+      message.textContent = text;
+      message.className = `message show ${type}`;
+      window.clearTimeout(showMessage.timer);
+      showMessage.timer = window.setTimeout(() => {
+        message.className = "message";
+      }, 3600);
+    }
+
+    async function request(url, options = {}) {
+      const response = await fetch(url, {
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        ...options
+      });
+      const text = await response.text();
+      const body = text ? JSON.parse(text) : {};
+      if (!response.ok || body.success === false) {
+        throw new Error(body.message || `Request failed with ${response.status}`);
+      }
+      return body;
+    }
+
+    function toArray(response) {
+      return Array.isArray(response) ? response : response.value || [];
+    }
+
+    function setBusy(form, busy) {
+      form.querySelectorAll("button, input, select").forEach((control) => {
+        control.disabled = busy;
+      });
+    }
+
+    async function submitForm(form, url, payload, refresh) {
+      setBusy(form, true);
+      try {
+        const result = await request(url, { method: "POST", body: JSON.stringify(payload) });
+        form.reset();
+        showMessage(result.message);
+      } catch (error) {
+        showMessage(error.message, "error");
+      } finally {
+        setBusy(form, false);
+        await refreshAll(refresh);
+      }
+    }
+
+    async function refreshAll(extraRefresh) {
+      await Promise.all([
+        loadStatus(),
+        loadDoctors(),
+        loadAppointments(),
+        extraRefresh ? extraRefresh() : Promise.resolve()
+      ]);
+    }
+
+    async function loadStatus() {
+      try {
+        const status = await request(api.health);
+        $("totalBeds").textContent = status.totalBeds;
+        $("occupiedBeds").textContent = status.occupiedBeds;
+        $("availableBeds").textContent = status.availableBeds;
+        $("storageMode").textContent = status.memoryMode ? "Memory" : "Database";
+        $("statusText").textContent = "API online";
+        $("statusDot").classList.add("online");
+        $("memoryNotice").classList.toggle("show", Boolean(status.memoryMode));
+      } catch (error) {
+        $("statusText").textContent = "API offline";
+        $("statusDot").classList.remove("online");
+        showMessage(error.message, "error");
+      }
+    }
+
+    async function loadDoctors() {
+      const doctors = toArray(await request(api.doctors));
+      const table = $("doctorsTable");
+      const empty = $("doctorsEmpty");
+      table.querySelector("tbody").innerHTML = doctors.map((doctor) => `
+        <tr>
+          <td>${escapeHtml(doctor.docID)}</td>
+          <td>${escapeHtml(doctor.name)}</td>
+          <td>${escapeHtml(doctor.specialization || "-")}</td>
+        </tr>
+      `).join("");
+      table.hidden = doctors.length === 0;
+      empty.hidden = doctors.length !== 0;
+    }
+
+    async function loadAppointments() {
+      const appointments = toArray(await request(api.appointments));
+      const table = $("appointmentsTable");
+      const empty = $("appointmentsEmpty");
+      table.querySelector("tbody").innerHTML = appointments.map((appointment) => `
+        <tr>
+          <td>${escapeHtml(appointment.patientName)}</td>
+          <td>${escapeHtml(appointment.doctorName)}</td>
+          <td>${escapeHtml(appointment.appointmentDate)}</td>
+        </tr>
+      `).join("");
+      table.hidden = appointments.length === 0;
+      empty.hidden = appointments.length !== 0;
+    }
+
+    function formData(form) {
+      return Object.fromEntries(new FormData(form).entries());
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      })[char]);
+    }
+
+    $("patientForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const payload = formData(event.currentTarget);
+      payload.rateOrFee = Number(payload.rateOrFee);
+      await submitForm(event.currentTarget, api.patients, payload);
+      event.currentTarget.rateOrFee.value = 500;
+    });
+
+    $("doctorForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      await submitForm(event.currentTarget, api.doctors, formData(event.currentTarget));
+    });
+
+    $("appointmentForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      await submitForm(event.currentTarget, api.appointments, formData(event.currentTarget));
+    });
+
+    $("refreshDoctors").addEventListener("click", () => refreshAll().catch((error) => showMessage(error.message, "error")));
+    $("refreshAppointments").addEventListener("click", () => refreshAll().catch((error) => showMessage(error.message, "error")));
+
+    refreshAll().catch((error) => showMessage(error.message, "error"));
+  </script>
+</body>
+</html>
