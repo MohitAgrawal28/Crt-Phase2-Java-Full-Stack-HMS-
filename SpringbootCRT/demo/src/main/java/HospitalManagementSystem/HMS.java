@@ -100,13 +100,24 @@ public class HMS {
 
     private static DatabaseConfig loadDatabaseConfig(String configuredUrl, String configuredUser, String configuredPassword) {
         String rawUrl = firstPresent("JDBC_DATABASE_URL", "DATABASE_URL", "HMS_DB_URL", configuredUrl);
-        String user = firstPresent("DB_USER", "HMS_DB_USER", configuredUser);
-        String password = firstPresent("DB_PASSWORD", "HMS_DB_PASSWORD", configuredPassword);
+        String explicitUser = firstPresent("DB_USER", "HMS_DB_USER");
+        String explicitPassword = firstPresent("DB_PASSWORD", "HMS_DB_PASSWORD");
+        String user = explicitUser == null ? blankToNull(configuredUser) : explicitUser;
+        String password = explicitPassword == null ? blankToNull(configuredPassword) : explicitPassword;
 
         if (rawUrl == null) {
             return new DatabaseConfig("jdbc:postgresql://localhost:5432/hms_db",
                     user == null ? "postgres" : user,
                     password == null ? "" : password);
+        }
+
+        if (rawUrl.startsWith("postgres://") || rawUrl.startsWith("postgresql://")) {
+            return parsePostgresUrl(rawUrl, user, password);
+        }
+
+        if (user == null && rawUrl.startsWith("jdbc:mysql://localhost:3307/hms_db")) {
+            user = "root";
+            password = password == null ? "agrawalmm_3" : password;
         }
 
         if (rawUrl.startsWith("jdbc:")) {
@@ -115,13 +126,13 @@ public class HMS {
                     password == null ? "" : password);
         }
 
-        if (rawUrl.startsWith("postgres://") || rawUrl.startsWith("postgresql://")) {
-            return parsePostgresUrl(rawUrl, user, password);
-        }
-
         return new DatabaseConfig(rawUrl,
                 user == null ? "" : user,
                 password == null ? "" : password);
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value;
     }
 
     private static DatabaseConfig parsePostgresUrl(String rawUrl, String configuredUser, String configuredPassword) {

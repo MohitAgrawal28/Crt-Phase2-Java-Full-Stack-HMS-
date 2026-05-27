@@ -1,97 +1,82 @@
 # Railway Deployment Guide
 
 ## Prerequisites
-- Railway account (free at https://railway.app)
-- Git installed locally
-- Your code pushed to GitHub/GitLab
+- Railway account
+- GitHub repository connected to Railway
+- Backend root directory set to `SpringbootCRT/demo`
 
-## Step-by-Step Deployment
+## Backend Deployment
 
-### 1. Create a Railway Account & Project
-- Go to [https://railway.app](https://railway.app)
-- Sign up with GitHub (recommended for easy integration)
-- Create a new project
+1. Create a Railway project.
+2. Choose `Deploy from GitHub repo`.
+3. Select this repository.
+4. Set the backend service root directory to:
 
-### 2. Connect Your Repository
-- In Railway dashboard, click "New Project"
-- Select "Deploy from GitHub"
-- Authorize Railway to access your GitHub account
-- Select your repository containing this code
-
-### 3. Configure Environment Variables
-In your Railway project settings, add these environment variables:
-
-**For MySQL Database (if using Railway's MySQL):**
-```
-HMS_DB_URL=jdbc:mysql://<railway-mysql-host>:3306/hms_db
-HMS_DB_USER=<mysql-username>
-HMS_DB_PASSWORD=<mysql-password>
+```text
+SpringbootCRT/demo
 ```
 
-**Or if using Railway's MySQL add-on:**
-- Railway will automatically provide `DATABASE_URL` variable
-- Our app will read it and configure accordingly
+5. Add a PostgreSQL service in the same Railway project.
+6. Add this variable to the Spring Boot service:
 
-### 4. Add MySQL Database (Optional)
-- In your project, click "Add" → "Add a Service"
-- Select "MySQL"
-- Railway will automatically set up environment variables
-- Database credentials will be available as `DATABASE_URL`
+```text
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+```
 
-### 5. Deploy
-- Railway automatically deploys when you push to your main branch
-- Monitor the deployment in the Railway dashboard
-- Once deployed, you'll get a live URL for your API
+The app reads Railway's `postgres://...` URL directly and extracts the username/password from it. You can also override with `HMS_DB_URL`, `DB_USER`, and `DB_PASSWORD` when needed.
 
-### 6. Test Your Deployment
-Once deployed, test your endpoints:
+## Verify Backend
+
+After Railway deploys, generate a public domain and check:
+
 ```bash
-# Check system status
-curl https://<your-railway-url>/api/hms/status
-
-# Add a patient
-curl -X POST https://<your-railway-url>/api/hms/patients \
-  -H "Content-Type: application/json" \
-  -d '{"patientID":"P001","name":"John Doe","patientType":"Visitor","rateOrFee":500}'
+curl https://<your-railway-url>/api/hms/health
 ```
 
-## Files Created for Deployment
+Expected:
 
-- **Procfile** - Tells Railway how to run the application
-- **Dockerfile** - Multi-stage build for efficient containerization
-- **railway.json** - Railway-specific configuration
-- **.railwayignore** - Excludes unnecessary files from deployment
+```json
+{
+  "message": "Hospital Management System is running",
+  "memoryMode": false
+}
+```
 
-## Environment Variables Reference
+If `memoryMode` is `true`, the backend is running but PostgreSQL is not connected.
+
+## Frontend Deployment
+
+Deploy the repository to Vercel with this root directory:
+
+```text
+frontend
+```
+
+Add this Vercel environment variable:
+
+```text
+VITE_API_BASE_URL=https://<your-railway-url>
+```
+
+The backend currently allows local frontend origins and Vercel domains through CORS. To lock CORS to one domain, set this Railway variable after the Vercel domain is final:
+
+```text
+ALLOWED_ORIGIN_PATTERNS=https://<your-vercel-domain>
+```
+
+## Environment Variables
 
 | Variable | Purpose | Default |
 |----------|---------|---------|
-| `PORT` | Server port | 8080 |
-| `HMS_DB_URL` | MySQL connection URL | localhost:3306/hms_db |
-| `HMS_DB_USER` | MySQL username | root |
-| `HMS_DB_PASSWORD` | MySQL password | (required for production) |
+| `PORT` | Server port | `8080` |
+| `DATABASE_URL` | Railway PostgreSQL URL | local MySQL fallback |
+| `HMS_DB_URL` | Optional JDBC URL override | local MySQL fallback |
+| `DB_USER` / `HMS_DB_USER` | Optional DB username override | URL user or local fallback |
+| `DB_PASSWORD` / `HMS_DB_PASSWORD` | Optional DB password override | URL password or local fallback |
+| `ALLOWED_ORIGIN_PATTERNS` | Backend CORS origin patterns | local dev and `https://*.vercel.app` |
 
 ## Troubleshooting
 
-### Build Fails
-- Check that `pom.xml` has correct dependencies
-- Ensure Java 21 is specified (already configured)
-
-### Database Connection Fails
-- Make sure environment variables are set correctly in Railway
-- Check MySQL service is running (if using Railway's MySQL add-on)
-- App will fall back to in-memory mode if DB unavailable
-
-### Port Issues
-- Railway automatically assigns a PORT environment variable
-- Your app already reads this: `server.port=${PORT:8080}`
-
-## Next Steps
-1. Push code to GitHub
-2. Go to Railway dashboard
-3. Connect your GitHub repository
-4. Set environment variables
-5. Watch the deployment logs
-6. Test your live API endpoints!
-
-For more info: https://docs.railway.app/
+- If Railway health checks fail, confirm `/api/hms/health` is reachable.
+- If the API returns `memoryMode: true`, check the PostgreSQL service and `DATABASE_URL`.
+- If Vercel cannot call the API, check `VITE_API_BASE_URL` and Railway CORS settings.

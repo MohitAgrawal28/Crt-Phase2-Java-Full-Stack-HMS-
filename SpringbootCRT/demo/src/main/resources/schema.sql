@@ -4,41 +4,38 @@
 -- PATIENTS TABLE
 -- =========================
 CREATE TABLE IF NOT EXISTS patients (
-    patient_id VARCHAR(50) PRIMARY KEY,
+    patientID VARCHAR(50) PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    patient_type VARCHAR(20) DEFAULT 'Visitor',
-    rate_or_fee INT DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    patientType VARCHAR(20) DEFAULT 'Visitor',
+    rateOrFee INT DEFAULT 0
 );
 
 -- =========================
 -- DOCTORS TABLE
 -- =========================
 CREATE TABLE IF NOT EXISTS doctors (
-    doc_id VARCHAR(50) PRIMARY KEY,
+    docID VARCHAR(50) PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    specialization VARCHAR(100) DEFAULT '',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    specialization VARCHAR(100) DEFAULT ''
 );
 
 -- =========================
 -- APPOINTMENTS TABLE
 -- =========================
 CREATE TABLE IF NOT EXISTS appointments (
-    appointment_id SERIAL PRIMARY KEY,
-    patient_id VARCHAR(50) NOT NULL,
-    doc_id VARCHAR(50) NOT NULL,
-    appointment_date DATE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    appointmentID SERIAL PRIMARY KEY,
+    patientID VARCHAR(50) NOT NULL,
+    docID VARCHAR(50) NOT NULL,
+    appointmentDate DATE,
 
     CONSTRAINT fk_patient
-        FOREIGN KEY (patient_id)
-        REFERENCES patients(patient_id)
+        FOREIGN KEY (patientID)
+        REFERENCES patients(patientID)
         ON DELETE CASCADE,
 
     CONSTRAINT fk_doctor
-        FOREIGN KEY (doc_id)
-        REFERENCES doctors(doc_id)
+        FOREIGN KEY (docID)
+        REFERENCES doctors(docID)
         ON DELETE CASCADE
 );
 
@@ -47,10 +44,10 @@ CREATE TABLE IF NOT EXISTS appointments (
 -- =========================
 
 CREATE INDEX IF NOT EXISTS idx_patient_type
-ON patients(patient_type);
+ON patients(patientType);
 
 CREATE INDEX IF NOT EXISTS idx_doctor_specialization
 ON doctors(specialization);
 
 CREATE INDEX IF NOT EXISTS idx_appointment_date
-ON appointments(appointment_date);
+ON appointments(appointmentDate);
