@@ -242,9 +242,34 @@ java -jar target/demo-0.0.1-SNAPSHOT.jar
 - Confirm the database `hms_db` is reachable from the deployment server.
 - After deployment, run the same Postman check flow against the deployed base URL.
 
-## Deploy On Railway
+## Deploy Backend On Render
 
-This repository is a multi-folder workspace, so Railway must deploy only the Spring Boot module.
+This repository includes a root `render.yaml` Blueprint for Render.
+
+1. Push the latest code to GitHub.
+2. Open Render and choose `New +` -> `Blueprint`.
+3. Select this repository.
+4. Render creates `hms-backend` and `hms-postgres`.
+5. Verify:
+
+```http
+GET https://<your-render-domain>/api/hms/health
+```
+
+Expected result:
+
+```json
+{
+  "message": "Hospital Management System is running",
+  "memoryMode": false
+}
+```
+
+If `memoryMode` is `true`, the backend is running but Render PostgreSQL variables are not connected correctly.
+
+## Deploy Backend On Railway
+
+Railway is still supported by `railway.json`, but Render is the current deployment target.
 
 1. Push the latest code to GitHub.
 2. Open Railway and create a new project.
