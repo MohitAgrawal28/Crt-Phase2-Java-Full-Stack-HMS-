@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.view.RedirectView;
 
 @RestController
 public class HospitalManagementController {
@@ -19,8 +20,8 @@ public class HospitalManagementController {
     }
 
     @GetMapping("/")
-    public HospitalManagementService.SystemStatus appRoot() {
-        return service.status();
+    public RedirectView appRoot() {
+        return new RedirectView("/dashboard.html");
     }
 
     @GetMapping("/api/hms")

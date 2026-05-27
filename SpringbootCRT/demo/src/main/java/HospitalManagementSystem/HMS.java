@@ -67,12 +67,24 @@ class Doctor {
 }
 
 public class HMS {
-    private static final DatabaseConfig DATABASE = loadDatabaseConfig();
     private final int totalBeds = 10;
+    private final DatabaseConfig database;
     private boolean memoryMode;
     private final Map<String, Patient> memoryPatients = new LinkedHashMap<>();
     private final Map<String, Doctor> memoryDoctors = new LinkedHashMap<>();
     private final List<AppointmentRecord> memoryAppointments = new ArrayList<>();
+
+    public HMS() {
+        this(loadDatabaseConfig(null, null, null));
+    }
+
+    public HMS(String url, String user, String password) {
+        this(loadDatabaseConfig(url, user, password));
+    }
+
+    private HMS(DatabaseConfig database) {
+        this.database = database;
+    }
 
     private static class AppointmentRecord {
         private final String patientID;
@@ -86,15 +98,10 @@ public class HMS {
         }
     }
 
-    private static String getConfig(String key, String defaultValue) {
-        String value = System.getenv(key);
-        return value == null || value.isBlank() ? defaultValue : value;
-    }
-
-    private static DatabaseConfig loadDatabaseConfig() {
-        String rawUrl = firstPresent("JDBC_DATABASE_URL", "DATABASE_URL", "HMS_DB_URL");
-        String user = firstPresent("DB_USER", "HMS_DB_USER");
-        String password = firstPresent("DB_PASSWORD", "HMS_DB_PASSWORD");
+    private static DatabaseConfig loadDatabaseConfig(String configuredUrl, String configuredUser, String configuredPassword) {
+        String rawUrl = firstPresent("JDBC_DATABASE_URL", "DATABASE_URL", "HMS_DB_URL", configuredUrl);
+        String user = firstPresent("DB_USER", "HMS_DB_USER", configuredUser);
+        String password = firstPresent("DB_PASSWORD", "HMS_DB_PASSWORD", configuredPassword);
 
         if (rawUrl == null) {
             return new DatabaseConfig("jdbc:postgresql://localhost:5432/hms_db",
@@ -136,10 +143,20 @@ public class HMS {
     }
 
     private static String firstPresent(String... keys) {
-        for (String key : keys) {
-            String value = System.getenv(key);
-            if (value != null && !value.isBlank()) {
-                return value;
+        for (String keyOrValue : keys) {
+            if (keyOrValue != null && !keyOrValue.isBlank() && keyOrValue.contains(":")) {
+                return keyOrValue;
+            }
+
+            if (keyOrValue != null && !keyOrValue.isBlank() && !keyOrValue.matches("[A-Z0-9_]+")) {
+                return keyOrValue;
+            }
+
+            if (keyOrValue != null && !keyOrValue.isBlank()) {
+                String value = System.getenv(keyOrValue);
+                if (value != null && !value.isBlank()) {
+                    return value;
+                }
             }
         }
         return null;
@@ -150,12 +167,19 @@ public class HMS {
     }
 
     private Connection getConnection() throws SQLException {
+        String driverClass = database.url().startsWith("jdbc:mysql:")
+                ? "com.mysql.cj.jdbc.Driver"
+                : "org.postgresql.Driver";
         try {
-            Class.forName("org.postgresql.Driver");
+            Class.forName(driverClass);
         } catch (ClassNotFoundException e) {
-            throw new SQLException("PostgreSQL JDBC driver not found. Add postgresql to the classpath.", e);
+            throw new SQLException("JDBC driver not found for " + database.url(), e);
         }
-        return DriverManager.getConnection(DATABASE.url(), DATABASE.user(), DATABASE.password());
+        return DriverManager.getConnection(database.url(), database.user(), database.password());
+    }
+
+    private boolean isMySql() {
+        return database.url().startsWith("jdbc:mysql:");
     }
 
     public int getTotalBeds() {
@@ -180,7 +204,7 @@ public class HMS {
                     + "specialization VARCHAR(100))";
 
             String createAppointmentsTable = "CREATE TABLE IF NOT EXISTS appointments ("
-                    + "appointmentID SERIAL PRIMARY KEY, "
+                    + (isMySql() ? "appointmentID INT AUTO_INCREMENT PRIMARY KEY, " : "appointmentID SERIAL PRIMARY KEY, ")
                     + "patientID VARCHAR(50), "
                     + "docID VARCHAR(50), "
                     + "appointmentDate DATE, "

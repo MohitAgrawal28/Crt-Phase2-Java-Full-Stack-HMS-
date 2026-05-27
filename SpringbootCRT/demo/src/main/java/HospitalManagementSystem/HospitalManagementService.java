@@ -2,14 +2,18 @@ package HospitalManagementSystem;
 
 import java.time.LocalDate;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 public class HospitalManagementService {
     private final HMS hms;
 
-    public HospitalManagementService() {
-        this.hms = new HMS();
+    public HospitalManagementService(
+            @Value("${spring.datasource.url:}") String databaseUrl,
+            @Value("${spring.datasource.username:}") String databaseUser,
+            @Value("${spring.datasource.password:}") String databasePassword) {
+        this.hms = new HMS(databaseUrl, databaseUser, databasePassword);
         this.hms.initializeDatabase();
     }
 
