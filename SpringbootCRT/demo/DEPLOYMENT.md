@@ -1,36 +1,29 @@
-# Railway Deployment Guide
+# Deployment Guide
 
-## Prerequisites
-- Railway account
-- GitHub repository connected to Railway
-- Backend root directory set to `SpringbootCRT/demo`
+## Backend On Render
 
-## Backend Deployment
+The repository includes a root `render.yaml` Blueprint. Render reads it from GitHub and creates:
 
-1. Create a Railway project.
-2. Choose `Deploy from GitHub repo`.
-3. Select this repository.
-4. Set the backend service root directory to:
+- `hms-backend` web service
+- `hms-postgres` PostgreSQL database
+- `DATABASE_URL` wired from the database to the backend
+- Health check at `/api/hms/health`
 
-```text
-SpringbootCRT/demo
-```
+### Deploy
 
-5. Add a PostgreSQL service in the same Railway project.
-6. Add this variable to the Spring Boot service:
+1. Open Render.
+2. Click `New +`.
+3. Choose `Blueprint`.
+4. Select this GitHub repository.
+5. Confirm the Blueprint plan.
+6. Render will create and deploy the backend automatically.
 
-```text
-DATABASE_URL=${{Postgres.DATABASE_URL}}
-```
+### Verify Backend
 
-The app reads Railway's `postgres://...` URL directly and extracts the username/password from it. You can also override with `HMS_DB_URL`, `DB_USER`, and `DB_PASSWORD` when needed.
-
-## Verify Backend
-
-After Railway deploys, generate a public domain and check:
+After Render deploys, check:
 
 ```bash
-curl https://<your-railway-url>/api/hms/health
+curl https://<your-render-url>/api/hms/health
 ```
 
 Expected:
@@ -44,7 +37,7 @@ Expected:
 
 If `memoryMode` is `true`, the backend is running but PostgreSQL is not connected.
 
-## Frontend Deployment
+## Frontend On Vercel
 
 Deploy the repository to Vercel with this root directory:
 
@@ -55,10 +48,10 @@ frontend
 Add this Vercel environment variable:
 
 ```text
-VITE_API_BASE_URL=https://<your-railway-url>
+VITE_API_BASE_URL=https://<your-render-url>
 ```
 
-The backend currently allows local frontend origins and Vercel domains through CORS. To lock CORS to one domain, set this Railway variable after the Vercel domain is final:
+The backend currently allows local frontend origins and Vercel domains through CORS. To lock CORS to one domain, set this Render environment variable after the Vercel domain is final:
 
 ```text
 ALLOWED_ORIGIN_PATTERNS=https://<your-vercel-domain>
@@ -69,7 +62,7 @@ ALLOWED_ORIGIN_PATTERNS=https://<your-vercel-domain>
 | Variable | Purpose | Default |
 |----------|---------|---------|
 | `PORT` | Server port | `8080` |
-| `DATABASE_URL` | Railway PostgreSQL URL | local MySQL fallback |
+| `DATABASE_URL` | Render PostgreSQL URL | local MySQL fallback |
 | `HMS_DB_URL` | Optional JDBC URL override | local MySQL fallback |
 | `DB_USER` / `HMS_DB_USER` | Optional DB username override | URL user or local fallback |
 | `DB_PASSWORD` / `HMS_DB_PASSWORD` | Optional DB password override | URL password or local fallback |
@@ -77,6 +70,6 @@ ALLOWED_ORIGIN_PATTERNS=https://<your-vercel-domain>
 
 ## Troubleshooting
 
-- If Railway health checks fail, confirm `/api/hms/health` is reachable.
+- If Render health checks fail, confirm `/api/hms/health` is reachable.
 - If the API returns `memoryMode: true`, check the PostgreSQL service and `DATABASE_URL`.
-- If Vercel cannot call the API, check `VITE_API_BASE_URL` and Railway CORS settings.
+- If Vercel cannot call the API, check `VITE_API_BASE_URL` and Render CORS settings.
