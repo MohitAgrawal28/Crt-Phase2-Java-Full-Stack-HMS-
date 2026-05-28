@@ -1,0 +1,127 @@
+name: Hospital Management System CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - "v*"
+    paths:
+      - "casestudy/HospitalManagementSystem/**"
+      - ".github/workflows/hms-ci-cd.yml"
+  pull_request:
+    paths:
+      - "casestudy/HospitalManagementSystem/**"
+      - ".github/workflows/hms-ci-cd.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-package:
+    name: Build and package HMS
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: hms_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install MySQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mysql-client
+
+      - name: Validate database script
+        run: |
+          mysql -h 127.0.0.1 -P 3306 -uroot -proot < casestudy/HospitalManagementSystem/database_setup.sql
+
+      - name: Compile application
+        working-directory: casestudy
+        run: |
+          mkdir -p build/classes
+          javac -d build/classes \
+            -cp "HospitalManagementSystem/lib/mysql-connector-j-8.0.33.jar" \
+            HospitalManagementSystem/HMS.java \
+            HospitalManagementSystem/AppointmentRow.java \
+            HospitalManagementSystem/HMSApp.java
+
+      - name: Package application
+        working-directory: casestudy
+        run: |
+          mkdir -p dist/hms/lib
+          jar cfe dist/hms/hms-app.jar HospitalManagementSystem.HMSApp -C build/classes .
+          cp HospitalManagementSystem/lib/mysql-connector-j-8.0.33.jar dist/hms/lib/
+          cp HospitalManagementSystem/database_setup.sql dist/hms/
+          cp HospitalManagementSystem/README.md dist/hms/
+          cat > dist/hms/run.sh <<'EOF'
+          #!/bin/bash
+          set -e
+
+          SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+          export HMS_DB_URL="${HMS_DB_URL:-jdbc:mysql://localhost:3306/hms_db}"
+          export HMS_DB_USER="${HMS_DB_USER:-root}"
+          export HMS_DB_PASSWORD="${HMS_DB_PASSWORD:-root}"
+
+          java -cp "$SCRIPT_DIR/hms-app.jar:$SCRIPT_DIR/lib/mysql-connector-j-8.0.33.jar" HospitalManagementSystem.HMSApp
+          EOF
+          cat > dist/hms/run.bat <<'EOF'
+          @echo off
+          setlocal
+
+          if "%HMS_DB_URL%"=="" set "HMS_DB_URL=jdbc:mysql://localhost:3306/hms_db"
+          if "%HMS_DB_USER%"=="" set "HMS_DB_USER=root"
+          if "%HMS_DB_PASSWORD%"=="" set "HMS_DB_PASSWORD=root"
+
+          java -cp "%~dp0hms-app.jar;%~dp0lib\mysql-connector-j-8.0.33.jar" HospitalManagementSystem.HMSApp
+
+          endlocal
+          EOF
+          chmod +x dist/hms/run.sh
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hospital-management-system
+          path: casestudy/dist/hms
+
+      - name: Create release package
+        if: startsWith(github.ref, 'refs/tags/v')
+        working-directory: casestudy/dist
+        run: |
+          zip -r "hospital-management-system-${GITHUB_REF_NAME}.zip" hms
+
+      - name: Publish GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            "casestudy/dist/hospital-management-system-${GITHUB_REF_NAME}.zip" \
+            --title "Hospital Management System ${GITHUB_REF_NAME}" \
+            --notes "Automated build for ${GITHUB_REF_NAME}."
